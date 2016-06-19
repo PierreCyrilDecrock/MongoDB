@@ -138,8 +138,11 @@ a - Qu’est ce que le TTL ?
 
 # TROISIÈME PARTIE (Driver MongoDB pour NodeJS)
 1 - Voir --> populate.js
+
 2 - Voir --> favorite.js (Problème, la liste des favoris de dépasse pas 2 de longueur, pourtant le random est bon sur le nombre de favoris)
+
 3 - Voir --> note.js
+
 4 - Voir --> noFavorite.js et findColdplay.js
 
 # QUATRIÈME PARTIE
