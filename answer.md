@@ -1,6 +1,6 @@
 # PREMIÈRE PARTIE (Un peu de sysadmin...)
 
-1. Vérifiez qu'aucun processus mongo tourne actuellement sur votre machine. Si c’est le cas, arretez le. Ensuite lancez une instance mongod avec le dbpath par défaut. Connectez-vous sur le shell mongo et affichez le port utilisé et les infos du host depuis le shell.
+1 - Vérifiez qu'aucun processus mongo tourne actuellement sur votre machine. Si c’est le cas, arretez le. Ensuite lancez une instance mongod avec le dbpath par défaut. Connectez-vous sur le shell mongo et affichez le port utilisé et les infos du host depuis le shell.
 
   // Connexion par défaut
   ```
@@ -24,13 +24,13 @@
   > db.hostInfo()
   ```
 
-2. Arretez le processus depuis le shell.
+2 - Arretez le processus depuis le shell.
 ```
 > use admi
 > db.shutdownServer()
 ```
 
-3. Lancez à nouveau une instance de mongod mais cette fois, modifiez le dbpath et le fichier de sortie de logs. Connectez vous sur le shell et affichez les infos utilisées pour la configuration du processus. Vérifiez aussi que les logs sont bien écrit dans le fichier avec un `tail -f` ou un `cat`.
+3 - Lancez à nouveau une instance de mongod mais cette fois, modifiez le dbpath et le fichier de sortie de logs. Connectez vous sur le shell et affichez les infos utilisées pour la configuration du processus. Vérifiez aussi que les logs sont bien écrit dans le fichier avec un `tail -f` ou un `cat`.
 ```
   > mongod --dbpath /Users/PierreCyril/Documents/Cours/MongoDB/ --port 27018 --logpath /Users/PierreCyril/Documents/Cours/MongoDB/logs.txt
 ```
@@ -41,62 +41,65 @@
   ```
 
 
-4. Faites l’import des données contenues dans le fichier zip donnée par l’enseignant afin de construire une base de données appelé “music”.
+4 - Faites l’import des données contenues dans le fichier zip donnée par l’enseignant afin de construire une base de données appelé “music”.
 ```
   > mongorestore -d music /Users/PierreCyril/Documents/Cours/MongoDB/mymusic/songs.bson
   ```
 
 # DEUXIÈME PARTIE (MongoDB Queries)
 
-1. Affichez les documents de la collection songs.
+1 - Affichez les documents de la collection songs.
 ```
   > db.songs.find()
   ```
 
-2. Comptez le nombre de documents existants dans la collection songs.
+2 - Comptez le nombre de documents existants dans la collection songs.
 ```
   > db.songs.find().count()
   ```
 
-3. Affichez exclusivement les titres des chansons du Coldplay de l’album X&Y.
+3 - Affichez exclusivement les titres des chansons du Coldplay de l’album X&Y.
 ```
   > db.songs.find({artist:"Coldplay",album: "X&Y"},{title:1, _id: 0})
 ```
-4. Affichez le titre et album des chansons de Stromae, ordonnés par année de la plus récente à la plus ancienne, et triés par ordre alphabétique par titre.
+4 - Affichez le titre et album des chansons de Stromae, ordonnés par année de la plus récente à la plus ancienne, et triés par ordre alphabétique par titre.
 ```
   > db.songs.find({artist:"Stromae"},{title:1, album: 1, _id: 0}).sort({year: 1}).sort({title: 1})
   ```
 
-5. Affichez les chansons du group Coldplay dans un tableau, où les éléments sont des strings ayant comme format TITRE (ALBUM).
+5 - Affichez les chansons du group Coldplay dans un tableau, où les éléments sont des strings ayant comme format TITRE (ALBUM).
 ```
   > db.songs.find({artist:"Coldplay"}).map(function(u){return u.title+"("+u.album+")"})
   ```
 
-6. Affichez, une seule fois, le noms des artistes ayant produit des chansons entre 2002 et 2005.
+6 - Affichez, une seule fois, le noms des artistes ayant produit des chansons entre 2002 et 2005.
 ```
   > db.songs.distinct('artist',{'year': {$gte : 2002, $lte : 2005}})
 ```
-7. Créez une collection recordLabel, qui puisse stocker maximum 3 documents ou 1 KB et dont la structure doit être :
+7 - Créez une collection recordLabel, qui puisse stocker maximum 3 documents ou 1 KB et dont la structure doit être :
 - nom: string
 - url: string
 
 La validation doit être stricte. Cherchez les regex nécessaires pour les attributes.
 
 > Obligation de passer en version mongoDB 3.2
+
 ```
 > brew update
 > brew unlink mongodb
 > brew install mongodb
 ```
+
 ```
   > db.createCollection( "recordLabel",{ capped: true, size: 1000, max: 3, validator: { $or: [{ name: { $type: "string" } },{ url: { $type: "string", $regex: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/ } }  ]}})
   ```
 
-8. Insérez les 3 registres dans la collection. Qu’est ce qui se passe lorsque vous essayez insérer un 4ème ?
+8 - Insérez les 3 registres dans la collection. Qu’est ce qui se passe lorsque vous essayez insérer un 4ème ?
 ```
 > db.recordLabel.insert([{'nom': 'one', 'url': 'https://one.fr'},{'nom': 'two', 'url': 'https://two.fr'},{'nom': 'three', 'url': 'https://three.fr'}])
 ```
 > Résultat :
+
 ```
 BulkWriteResult({
   "writeErrors" : [ ],
@@ -110,6 +113,7 @@ BulkWriteResult({
 })
 ```
 > Insertion d'un 4ème
+
 ```
 > db.recordLabel.insert({'nom': 'foor', 'url': 'https://foor.fr'})
 WriteResult({ "nInserted" : 1 })
@@ -119,23 +123,24 @@ WriteResult({ "nInserted" : 1 })
 { "_id" : ObjectId("576593a2f2e893384645f664"), "nom" : "foor", "url" : "https://foor.fr" }
 ```
 > La 4ème valeur remplace la dernière pour n'en conserver que 3 au maximum
-9. Modifiez le validator sur la collection afin d’ajouter le pays en utilisant le code (ISO 31661 alpha 2)
+
+9 - Modifiez le validator sur la collection afin d’ajouter le pays en utilisant le code (ISO 31661 alpha 2)
 
 ```
 > db.runCommand({"collMod": "recordLabel","validator": {$and: [{"nom": {$type:"string"}},{"url": {$regex: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/}},{"pays":/^[a-z]{2,3}(?:-[A-Z]{2,3}(?:-[a-zA-Z]{4})?)?$/}]}})
 ```
 
-10. Pour allez plus loin:
+10 - Pour allez plus loin:
 
-a. Qu’est ce que le TTL ?
+a - Qu’est ce que le TTL ?
 
 > Ça signifie "Time To Live". C'est une sorte de date d'expiration que l'on peut ajouter à nos éléments. On peut spécifier qu'au bout de 3600 secondes (1h), l'éléments soit supprimé.
 
 # TROISIÈME PARTIE (Driver MongoDB pour NodeJS)
-1. Voir --> populate.js
-2. Voir --> favorite.js (Problème, la liste des favoris de dépasse pas 2 de longueur, pourtant le random est bon sur le nombre de favoris)
-3. Voir --> note.js
-4. Voir --> noFavorite.js et findColdplay.js
+1 - Voir --> populate.js
+2 - Voir --> favorite.js (Problème, la liste des favoris de dépasse pas 2 de longueur, pourtant le random est bon sur le nombre de favoris)
+3 - Voir --> note.js
+4 - Voir --> noFavorite.js et findColdplay.js
 
 # QUATRIÈME PARTIE
 
@@ -252,20 +257,20 @@ Table `candidat`:
 
 ## PARTIE FINALE
 
-1. Exportez la collections des chansons.
+1 - Exportez la collections des chansons.
 
 ```
 > mongodump --db music --collection songs --out /Users/PierreCyril/Documents/Cours/MongoDB
 2016-06-19T01:56:28.863+0200  writing music.songs to
 2016-06-19T01:56:28.863+0200  done dumping music.songs (19 documents)
 ```
-2. Exportez la collection des utilisateurs de la base des données n’ayant aucune chanson dans la liste des favorites.
+2 - Exportez la collection des utilisateurs de la base des données n’ayant aucune chanson dans la liste des favorites.
 ```
 > mongodump --db music --collection users --query '{favoriteSongs: {$size: 0}}' --out /Users/PierreCyril/Documents/Cours/MongoDB
 2016-06-19T01:58:09.920+0200  writing music.users to
 2016-06-19T01:58:09.923+0200  done dumping music.users (93 documents)
 ```
-3. Créez une nouvelle base de données appelé ‘nofavorites’ contenant les utilisateurs exportés.
+3 - Créez une nouvelle base de données appelé ‘nofavorites’ contenant les utilisateurs exportés.
 
 ```
 > mongorestore --db no-favorites --collection users /Users/PierreCyril/Documents/Cours/MongoDB/music/users.bson
@@ -277,7 +282,7 @@ Table `candidat`:
 2016-06-19T02:02:06.031+0200  done
 ```
 
-4. Recherche: Quelles autres commandes permettent sur mongodb de faire export et import ? Quelles sont les différences avec mongodump et mongorestore ?
+4 - Recherche: Quelles autres commandes permettent sur mongodb de faire export et import ? Quelles sont les différences avec mongodump et mongorestore ?
 
 **Export :** `mongoexport` et `mongodump`
 
